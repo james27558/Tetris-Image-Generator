@@ -1,21 +1,40 @@
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
+/**
+ * Represent a piece on the board. Piece position is defined from a center and block offsets.
+ */
 public class Piece {
 
-    static RealMatrix counterClockwiseRotationMatrix = MatrixUtils.createRealMatrix(new double[][]{{0, 1}, {-1, 0}});
-    static RealMatrix clockwiseRotationMatrix = MatrixUtils.createRealMatrix(new double[][]{{0, -1}, {1, 0}});
+    static final RealMatrix counterClockwiseRotationMatrix =
+            MatrixUtils.createRealMatrix(new double[][]{{0, 1}, {-1, 0}});
 
+    static final RealMatrix clockwiseRotationMatrix = MatrixUtils.createRealMatrix(new double[][]{{0, -1}, {1, 0}});
+
+    // Bound Offsets
     int maxXOffset;
     int minXOffset;
     int maxYOffset;
     int minYOffset;
+
     PieceInfo pieceInfo;
     RealMatrix blockOffsets;
+
+    // Position
     int boardX;
     int boardY;
+
+    // Control
     boolean stopped;
 
+    /**
+     * Initialises the Piece with a preset set of block offsets using the default set of pieces at a given position
+     * on the board. The Piece will be constructed with the deafult rotation for the given Piece
+     *
+     * @param pieceInfo Piece type to inherit default block positions from
+     * @param boardX
+     * @param boardY
+     */
     Piece(PieceInfo pieceInfo, int boardX, int boardY) {
         this.pieceInfo = pieceInfo;
         this.boardX = boardX;
@@ -25,60 +44,53 @@ public class Piece {
         blockOffsets = DefaultPieceRotations.values()[pieceInfo.ordinal()].blockOffsets;
     }
 
+    /**
+     * Check if a given index is out of bounds of the Board
+     *
+     * @param x
+     * @param y
+     * @return
+     */
     private static boolean isIndexOutOfBoardBounds(int x, int y) {
         return (x < 0 || x > Board.board.width - 1 || y < 0 || y > Board.board.height - 1);
     }
 
+    /**
+     * Rotates the Piece clockwise. Doesn't do any error checking or check if the rotation would make the Piece
+     * overlap with existing Pieces on the board. Updates the bound offsets afterwards
+     */
     void rotatePieceClockwise() {
+        // The O Piece doesn't rotate
         if (pieceInfo == PieceInfo.O) return;
 
         // Rotate the piece
+        // The I Piece must be handled seperately, otherwise rotate using matrix multiplication
         if (pieceInfo == PieceInfo.I) {
-            IRotationsClockwise currentRotation = IRotationsClockwise.identifyRotationFromMatrix(blockOffsets);
-            blockOffsets = IRotationsClockwise.getNextRotation(currentRotation).blockOffsets;
+            IRotations currentRotation = IRotations.identifyRotationFromMatrix(blockOffsets);
+            blockOffsets = currentRotation.getClockwiseRotation().blockOffsets;
         } else {
             blockOffsets = clockwiseRotationMatrix.multiply(blockOffsets);
         }
 
-        // Check if the new rotation puts the piece out of bounds
-//        if (!wouldNewCenterBeValid(boardX, boardY)) {
-//            // If the piece is now out of bounds, try to wall kick it
-//            tryToWallKickPiece();
-//
-//            // If, after the wall kick the piece is still overlapping existing pieces
-//            if (!wouldNewCenterBeValid(boardX, boardY)) {
-//                // Try to floor kick
-//                tryToFloorKickPiece();
-//            }
-//        }
-
         // As the piece has been rotated, the min and max values must be updated
         updateMaxMinValues();
-
     }
 
+    /**
+     * Rotates the Piece counterclockwise. Doesn't do any error checking or check if the rotation would make the Piece
+     * overlap with existing Pieces on the board. Updates the bound offsets afterwards
+     */
     void rotatePieceCounterClockwise() {
         if (pieceInfo == PieceInfo.O) return;
 
         // Rotate the piece
+        // The I Piece must be handled seperately, otherwise rotate using matrix multiplication
         if (pieceInfo == PieceInfo.I) {
-            IRotationsClockwise currentRotation = IRotationsClockwise.identifyRotationFromMatrix(blockOffsets);
-            blockOffsets = IRotationsClockwise.getPreviousRotation(currentRotation).blockOffsets;
+            IRotations currentRotation = IRotations.identifyRotationFromMatrix(blockOffsets);
+            blockOffsets = currentRotation.getCounterClockwiseRotation().blockOffsets;
         } else {
             blockOffsets = counterClockwiseRotationMatrix.multiply(blockOffsets);
         }
-
-        // Check if the new rotation puts the piece out of bounds
-//        if (!wouldNewCenterBeValid(boardX, boardY)) {
-//            // If the piece is now out of bounds, try to wall kick it
-//            tryToWallKickPiece();
-//
-//            // If, after the wall kick the piece is still overlapping existing pieces
-//            if (!wouldNewCenterBeValid(boardX, boardY)) {
-//                // Try to floor kick
-//                tryToFloorKickPiece();
-//            }
-//        }
 
         // As the piece has been rotated, the min and max values must be updated
         updateMaxMinValues();
@@ -131,7 +143,7 @@ public class Piece {
      *
      * @param newCenterX Column of the new center X position on the board
      * @param newCenterY Row of the new center Y position on the board
-     * @return Weather the new center would be a valid position for the piece
+     * @return Whether the new center would be a valid position for the piece
      */
     private boolean wouldNewCenterBeValid(int newCenterX, int newCenterY) {
         for (int i = 0; i < 4; i++) {
@@ -142,36 +154,38 @@ public class Piece {
             if (isIndexOutOfBoardBounds(blockX, blockY) || Board.board.getBlock(blockX, blockY) != null) return false;
         }
 
-        // All new spaces are empty so the new center is valid
+        // All new positions are empty so the new center is valid
         return true;
     }
 
+    /**
+     * Moves the Piece left by one block. The move wont occur if the Piece isn't able to move i.e. it is blocked by a
+     * block or the edge of the Board
+     * @return true if the Piece has successfully moved, false if the Piece was blocked
+     */
     boolean movePieceLeft() {
-        boolean hasPieceMovedOverall = true;
-        boardX--; // Move the center of the block to the left
-
-        // Check if the new blocks position overlaps with existing blocks, if so, move the block right
-        if (!wouldNewCenterBeValid(boardX, boardY)) {
-            boardX++;
-            hasPieceMovedOverall = false;
+        // Check if the new blocks position overlaps with existing blocks, if not, move the Piece
+        if (wouldNewCenterBeValid(boardX - 1, boardY)) {
+            boardX--;
+            return true;
+        } else {
+            return false;
         }
-
-        // Place the block back on the board
-        return hasPieceMovedOverall;
     }
 
+    /**
+     * Moves the Piece right by one block. The move wont occur if the Piece isn't able to move i.e. it is blocked by a
+     * block or the edge of the Board
+     * @return true if the Piece has successfully moved, false if the Piece was blocked
+     */
     boolean movePieceRight() {
-        boolean hasPieceMovedOverall = true;
-        boardX++; // Move the center of the block to the right
-
-        // Check if the new blocks position overlaps with existing blocks, if so, move the block left
-        if (!wouldNewCenterBeValid(boardX, boardY)) {
-            boardX--;
-            hasPieceMovedOverall = false;
+        // Check if the new blocks position overlaps with existing blocks, if not, move the Piece
+        if (wouldNewCenterBeValid(boardX + 1, boardY)) {
+            boardX++;
+            return true;
+        } else {
+            return false;
         }
-
-        // Place the block back on the board
-        return hasPieceMovedOverall;
     }
 
     void placePieceOnBoard() {
@@ -192,13 +206,12 @@ public class Piece {
     }
 
     /**
-     * @return Returns an array of ints that contain the indexes of the columns the piece is in
+     * @return An array of ints that contain the indexes of the columns the piece is in
      */
     int[] whatColumsIsThisPieceIn() {
-        updateMaxMinValues();
 
         if (pieceInfo == PieceInfo.I) {
-            switch (IRotationsClockwise.identifyRotationFromMatrix(blockOffsets)) {
+            switch (IRotations.identifyRotationFromMatrix(blockOffsets)) {
                 case CLOCKWISE_ONE:
                     return new int[]{boardX + 1};
                 case CLOCKWISE_THREE:
@@ -225,7 +238,8 @@ public class Piece {
     int[] whatColumsIsThisPieceInWithPaddingColumns() {
         updateMaxMinValues();
 
-        // Calculate the minimum offset. The piece can't be outside the board but with padding it could be outside the board
+        // Calculate the minimum offset. The piece can't be outside the board but with padding it could be outside
+        // the board
         // If the padding would be outside the board then restrict it to the board
         int minPos;
         if (boardX + minXOffset - 1 >= 0) {
@@ -299,7 +313,14 @@ public class Piece {
         }
     }
 
-    enum IRotationsClockwise {
+    /**
+     * This enum contains preset block offsets for the I Piece in all rotations.
+     * <p>
+     * All Piece rotations apart from the I Piece can be calculated using clockwise and counterclockwise roatation
+     * matricies. However, since the I Piece's center of rotation isn't in the middle of a block, it's in between the
+     * corners of the two middle blocks, we can't use a rotation matrix for it.
+     */
+    private enum IRotations {
         Initial(MatrixUtils.createRealMatrix(new double[][]{{-1, 0, 1, 2}, {-1, -1, -1, -1}})),
         CLOCKWISE_ONE(MatrixUtils.createRealMatrix(new double[][]{{1, 1, 1, 1}, {-2, -1, 0, 1}})),
         CLOCKWISE_TWO(MatrixUtils.createRealMatrix(new double[][]{{-1, 0, 1, 2}, {0, 0, 0, 0}})),
@@ -307,31 +328,31 @@ public class Piece {
 
         private RealMatrix blockOffsets;
 
-        private IRotationsClockwise(RealMatrix blockOffsets) {
+        private IRotations(RealMatrix blockOffsets) {
             this.blockOffsets = blockOffsets;
         }
 
-        static IRotationsClockwise identifyRotationFromMatrix(RealMatrix matrix) {
-            for (IRotationsClockwise rotations : IRotationsClockwise.values()) {
+        private static IRotations identifyRotationFromMatrix(RealMatrix matrix) {
+            for (IRotations rotations : IRotations.values()) {
                 if (rotations.blockOffsets.equals(matrix)) return rotations;
             }
 
             return null;
         }
 
-        static IRotationsClockwise getNextRotation(IRotationsClockwise currentRotation) {
-            return IRotationsClockwise.values()[(currentRotation.ordinal() + 1) % 4];
+        private IRotations getClockwiseRotation() {
+            return IRotations.values()[(identifyRotationFromMatrix(blockOffsets).ordinal() + 1) % 4];
         }
 
-        static IRotationsClockwise getPreviousRotation(IRotationsClockwise currentRotation) {
-            return IRotationsClockwise.values()[Math.abs(currentRotation.ordinal() - 1) % 4];
+        private IRotations getCounterClockwiseRotation() {
+            return IRotations.values()[Math.abs(identifyRotationFromMatrix(blockOffsets).ordinal() - 1) % 4];
         }
     }
 
     enum DefaultPieceRotations {
         L(MatrixUtils.createRealMatrix(new double[][]{{0, 1, -1, -1}, {0, 0, 0, 1}})),
         T(MatrixUtils.createRealMatrix(new double[][]{{0, -1, 1, 0}, {0, 0, 0, 1}})),
-        I(IRotationsClockwise.Initial.blockOffsets),
+        I(IRotations.Initial.blockOffsets),
         S(MatrixUtils.createRealMatrix(new double[][]{{0, 1, 0, -1}, {0, 0, 1, 1}})),
         Z(MatrixUtils.createRealMatrix(new double[][]{{0, -1, 0, 1}, {0, 0, 1, 1}})),
         O(MatrixUtils.createRealMatrix(new double[][]{{0, 0, 1, 1}, {0, 1, 0, 1}})),
