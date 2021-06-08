@@ -18,7 +18,7 @@ public class Window extends PApplet {
 
     // User Settings
     static String argFiletype = ".tiff"; // Default .tiff
-    static int argSeed = -1; // Should use the default Random seed
+    static int argSeed = 0;
     static int argOutputNum = 1; // Default 1
 
     static long start = System.currentTimeMillis();
@@ -34,24 +34,31 @@ public class Window extends PApplet {
         if (args.length == 0) {
             System.out.println("Default argument order: [WIDTH] [HEIGHT] [DIAMETER] [HEIGHT DIFFERENCE] [CHAOS] [OPTIONAL ARGUMENTS]");
 
-            System.out.println("WIDTH: Integer - Width of the board in blocks");
-            System.out.println("HEIGHT: Integer - Height of the board in blocks");
-            System.out.println("DIAMETER: Integer - Diameter of the blocks in pixels");
-            System.out.println("HEIGHT DIFFERENCE: Integer - Number of blocks difference between the highest block and lowest block on the board");
-            System.out.println("CHAOS: Integer - Degree of chaos");
-            System.out.println("OPTIONAL ARGUMENTS: ");
+            System.out.println("    WIDTH: Integer - Width of the board in blocks");
+            System.out.println("    HEIGHT: Integer - Height of the board in blocks");
+            System.out.println("    DIAMETER: Integer - Diameter of the blocks in pixels");
+            System.out.println("    HEIGHT DIFFERENCE: Integer - Number of blocks difference between the highest " +
+                    "block and lowest block on the board");
+            System.out.println("    CHAOS: Integer - Degree of chaos");
+            System.out.println("    OPTIONAL ARGUMENTS: ");
 
-            System.out.println("    You can specify optional flags after the default arguments in a format similar to other " +
-                    "\n     command line programs by writing --NAME ARGUMENT after the default arguments, e.g. --filetype tiff or --seed 20\n");
+            System.out.println("        You can specify optional flags after the default arguments in a format " +
+                    "similar to other " +
+                    "\n         command line programs by writing --NAME ARGUMENT after the default arguments, e.g. " +
+                    "--filetype tiff or --seed 20\n");
 
-            System.out.println("    --filetype - Specifies the output filetype for the image generated. Takes 'tiff', " +
-                    "\n     'png', 'jpg', 'tga' as arguments. Defaults to the tiff filetype\n");
+            System.out.println("        --filetype - Specifies the output filetype for the image generated. Takes " +
+                    "'tiff', " +
+                    "\n         'png', 'jpg', 'tga' as arguments. Defaults to the tiff filetype\n");
 
-            System.out.println("    --outputnum - Specifies the number of images the program will generate before exiting. " +
-                    "\n     Higher numbers make the program take longer to exit. Takes an integer between 1 and " + Integer.MAX_VALUE + ". Defaults to 1\n");
+            System.out.println("        --outputnum - Specifies the number of images the program will generate before" +
+                    " exiting. " +
+                    "\n         Higher numbers make the program take longer to exit. Takes an integer between 1 and " + Integer.MAX_VALUE + ". Defaults to 1\n");
 
-            System.out.println("    --seed - Specifies the seed used to generate the random numbers used in the program. " +
-                    "\n     Running the program with the same seed will produce the same set of images. Defaults to an effectively random seed\n");
+            System.out.println("        --seed - Specifies the seed used to generate the random numbers used in the " +
+                    "program. " +
+                    "\n         Running the program with the same seed will produce the same set of images. Defaults " +
+                    "to an effectively random seed\n");
 
             System.exit(0);
         }
@@ -214,7 +221,7 @@ public class Window extends PApplet {
         }
 
         if (board != null) {
-            frameRate(100);
+            frameRate(120);
             background(51);
             strokeWeight(1);
 
@@ -232,8 +239,8 @@ public class Window extends PApplet {
             saveCount++;
         }
 
-        if (frameCount % 1 == 0 && placePieces) {
-            for (int i = 0; i < 100; i++) {
+        if (frameCount % 10 == 0 && placePieces) {
+            for (int i = 0; i < 1; i++) {
                 board.simulateCurrentPiece();
                 Board.loadNextPieceFromQueue();
             }
