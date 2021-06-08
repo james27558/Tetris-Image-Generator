@@ -29,22 +29,6 @@ public class Piece {
         return (x < 0 || x > Board.board.width - 1 || y < 0 || y > Board.board.height - 1);
     }
 
-    static int max(int a, int b) {
-        if (a > b) {
-            return a;
-        } else {
-            return b;
-        }
-    }
-
-    static int min(int a, int b) {
-        if (a < b) {
-            return a;
-        } else {
-            return b;
-        }
-    }
-
     void rotatePieceClockwise() {
         if (pieceInfo == PieceInfo.O) return;
 
@@ -273,16 +257,16 @@ public class Piece {
         this.maxXOffset = -99;
         this.minXOffset = 99;
         for (double d : blockOffsets.getData()[0]) {
-            this.maxXOffset = max(this.maxXOffset, (int) d);
-            this.minXOffset = min(this.minXOffset, (int) d);
+            this.maxXOffset = Window.max(this.maxXOffset, (int) d);
+            this.minXOffset = Window.min(this.minXOffset, (int) d);
         }
 
         // Find the max and min X offset
         this.maxYOffset = -99;
         this.minYOffset = 99;
         for (double d : blockOffsets.getData()[1]) {
-            this.maxYOffset = max(this.maxYOffset, (int) d);
-            this.minYOffset = min(this.minYOffset, (int) d);
+            this.maxYOffset = Window.max(this.maxYOffset, (int) d);
+            this.minYOffset = Window.min(this.minYOffset, (int) d);
         }
     }
 
