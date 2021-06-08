@@ -207,7 +207,7 @@ public class Window extends PApplet {
         size(widthInBlocks * cellDiameter, heightInBlocks * cellDiameter);
         board = new Board(widthInBlocks, heightInBlocks);
 
-//        Piece p = new Piece(Piece.PieceInfo.L, 5,10);
+//        Piece p = new Piece(Piece.PieceColour.L, 5,10);
 //        p.rotatePieceClockwise();
 //        p.rotatePieceClockwise();
 //        p.placePieceOnBoard();

@@ -1,6 +1,6 @@
 public class PotentialBoardState {
 
-    Piece.PieceInfo pieceInfo;
+    Piece.PieceColour pieceColour;
     int pieceX;
     int pieceY;
     int rotateCount;
@@ -10,8 +10,8 @@ public class PotentialBoardState {
     /*
     This class holds information about the board after a piece was placed
      */
-    PotentialBoardState(Piece.PieceInfo pieceInfo, int pieceX, int pieceY, int rotateCount, int boardHeightDiff) {
-        this.pieceInfo = pieceInfo;
+    PotentialBoardState(Piece.PieceColour pieceColour, int pieceX, int pieceY, int rotateCount, int boardHeightDiff) {
+        this.pieceColour = pieceColour;
         this.pieceX = pieceX;
         this.pieceY = pieceY;
         this.rotateCount = rotateCount;
@@ -25,7 +25,7 @@ public class PotentialBoardState {
      * @return The piece that is defined by this BoardState.
      */
     Piece producePiece() {
-        Piece newPiece = new Piece(pieceInfo, pieceX, pieceY);
+        Piece newPiece = new Piece(pieceColour, pieceX, pieceY);
 
         for (int i = 0; i < rotateCount; i++) {
             newPiece.rotatePieceClockwise();
@@ -37,7 +37,7 @@ public class PotentialBoardState {
     }
 
     public String toString() {
-        return pieceInfo.name() + " piece | X : " + pieceX + " | Y : " + pieceY + " | RotateCount : " + rotateCount + " | HeightDiff : " + boardHeightDiff + " | Score : " + score;
+        return pieceColour.name() + " piece | X : " + pieceX + " | Y : " + pieceY + " | RotateCount : " + rotateCount + " | HeightDiff : " + boardHeightDiff + " | Score : " + score;
     }
 
 }

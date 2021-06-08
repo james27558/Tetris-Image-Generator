@@ -5,14 +5,14 @@ import java.util.Random;
 public class Board {
     static BoardArray board;
     static Piece currentPiece;
-    static Piece.PieceInfo holdPieceInfo;
+    static Piece.PieceColour holdPieceColour;
 
     static Random random;
     static int pieceStartX = 3;
     static int pieceStartY = 2;
     static boolean canHold = true;
-    static ArrayList<Piece.PieceInfo> currentPieceList;
-    static ArrayList<Piece.PieceInfo> nextPieceList;
+    static ArrayList<Piece.PieceColour> currentPieceList;
+    static ArrayList<Piece.PieceColour> nextPieceList;
     static int pieceCount = 0;
 
     static {
@@ -34,10 +34,10 @@ public class Board {
         currentPiece = new Piece(currentPieceList.remove(0), pieceStartX, pieceStartY);
     }
 
-    static ArrayList<Piece.PieceInfo> generatePieceList() {
-        ArrayList piecelist = new ArrayList<Piece.PieceInfo>();
+    static ArrayList<Piece.PieceColour> generatePieceList() {
+        ArrayList piecelist = new ArrayList<Piece.PieceColour>();
 
-        for (Piece.PieceInfo piece : Piece.PieceInfo.values()) {
+        for (Piece.PieceColour piece : Piece.PieceColour.values()) {
             piecelist.add(piece);
             piecelist.add(piece);
         }
@@ -94,7 +94,7 @@ public class Board {
      * @param n nth piece to get in the piece list, starting at 1. n = 1 is the next piece in the queue
      * @return the piece info of the nth piece
      */
-    static Piece.PieceInfo getNthPieceInQueue(int n) {
+    static Piece.PieceColour getNthPieceInQueue(int n) {
         // If the currentPieceList isn't big enough then get from nextPieceList
         if (n > currentPieceList.size()) {
             return nextPieceList.get(n - currentPieceList.size() - 1);
@@ -155,7 +155,7 @@ public class Board {
 
         // Calculate the number of times we need to rotate the piece
         int numberOfTimesToRotate;
-        switch (currentPiece.pieceInfo) {
+        switch (currentPiece.pieceColour) {
             case I:
                 numberOfTimesToRotate = 1;
                 break;
@@ -178,7 +178,7 @@ public class Board {
 
             // If the I piece is vertical such that its center block is to the left of the piece, start the center block
             // at -1 so that the line piece is flush with the left side of the board
-            if (currentPiece.pieceInfo == Piece.PieceInfo.I && rotateCount == 1) currentPiece.boardX = -1;
+            if (currentPiece.pieceColour == Piece.PieceColour.I && rotateCount == 1) currentPiece.boardX = -1;
 
             // Repeat while the edge of the piece hasn't reached the edge of the board
             for (int i = 0; i <= board.width - currentPiece.calculatePieceWidth(); i++) {
@@ -187,7 +187,8 @@ public class Board {
 
                 currentPiece.placePieceOnBoard();
                 if (!doColumnsContainHoles(currentPiece.whatColumsIsThisPieceInWithPaddingColumns()))
-                    allOptions.add(new PotentialBoardState(currentPiece.pieceInfo, currentPiece.boardX, currentPiece.boardY, rotateCount, calculateBoardHeightDiff()));
+                    allOptions.add(new PotentialBoardState(currentPiece.pieceColour, currentPiece.boardX,
+                            currentPiece.boardY, rotateCount, calculateBoardHeightDiff()));
                 currentPiece.removePieceOnBoard();
 
                 currentPiece.boardX++;
@@ -199,13 +200,13 @@ public class Board {
         // Now that all positions have been simulated, we need to pick a position to use
         PotentialBoardState bestCandidate = pickCandidate(allOptions);
 
-        if (Window.logging && currentPiece.pieceInfo == Piece.PieceInfo.I) {
+        if (Window.logging && currentPiece.pieceColour == Piece.PieceColour.I) {
             for (PotentialBoardState state : allOptions) {
                 System.out.println(state);
             }
         }
 
-        if (Window.logging && currentPiece.pieceInfo == Piece.PieceInfo.I) {
+        if (Window.logging && currentPiece.pieceColour == Piece.PieceColour.I) {
             System.out.println("Best candidate: " + bestCandidate);
         }
         if (bestCandidate != null) {

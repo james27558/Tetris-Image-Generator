@@ -17,7 +17,7 @@ public class Piece {
     int maxYOffset;
     int minYOffset;
 
-    PieceInfo pieceInfo;
+    PieceColour pieceColour;
     RealMatrix blockOffsets;
 
     // Position
@@ -31,17 +31,17 @@ public class Piece {
      * Initialises the Piece with a preset set of block offsets using the default set of pieces at a given position
      * on the board. The Piece will be constructed with the deafult rotation for the given Piece
      *
-     * @param pieceInfo Piece type to inherit default block positions from
+     * @param pieceColour Piece type to inherit default block positions from
      * @param boardX
      * @param boardY
      */
-    Piece(PieceInfo pieceInfo, int boardX, int boardY) {
-        this.pieceInfo = pieceInfo;
+    Piece(PieceColour pieceColour, int boardX, int boardY) {
+        this.pieceColour = pieceColour;
         this.boardX = boardX;
         this.boardY = boardY;
         this.stopped = false;
 
-        blockOffsets = DefaultPieceRotations.values()[pieceInfo.ordinal()].blockOffsets;
+        blockOffsets = DefaultPieceRotations.values()[pieceColour.ordinal()].blockOffsets;
     }
 
     /**
@@ -61,11 +61,11 @@ public class Piece {
      */
     void rotatePieceClockwise() {
         // The O Piece doesn't rotate
-        if (pieceInfo == PieceInfo.O) return;
+        if (pieceColour == PieceColour.O) return;
 
         // Rotate the piece
         // The I Piece must be handled seperately, otherwise rotate using matrix multiplication
-        if (pieceInfo == PieceInfo.I) {
+        if (pieceColour == PieceColour.I) {
             IRotations currentRotation = IRotations.identifyRotationFromMatrix(blockOffsets);
             blockOffsets = currentRotation.getClockwiseRotation().blockOffsets;
         } else {
@@ -81,11 +81,11 @@ public class Piece {
      * overlap with existing Pieces on the board. Updates the bound offsets afterwards
      */
     void rotatePieceCounterClockwise() {
-        if (pieceInfo == PieceInfo.O) return;
+        if (pieceColour == PieceColour.O) return;
 
         // Rotate the piece
         // The I Piece must be handled seperately, otherwise rotate using matrix multiplication
-        if (pieceInfo == PieceInfo.I) {
+        if (pieceColour == PieceColour.I) {
             IRotations currentRotation = IRotations.identifyRotationFromMatrix(blockOffsets);
             blockOffsets = currentRotation.getCounterClockwiseRotation().blockOffsets;
         } else {
@@ -192,7 +192,7 @@ public class Piece {
         for (int i = 0; i < 4; i++) {
             int blockX = (int) blockOffsets.getEntry(0, i) + boardX;
             int blockY = (int) blockOffsets.getEntry(1, i) + boardY;
-            Board.board.set(blockX, blockY, new Block(blockX, blockY, pieceInfo.r, pieceInfo.g, pieceInfo.b));
+            Board.board.set(blockX, blockY, new Block(blockX, blockY, pieceColour.r, pieceColour.g, pieceColour.b));
         }
     }
 
@@ -210,7 +210,7 @@ public class Piece {
      */
     int[] whatColumsIsThisPieceIn() {
 
-        if (pieceInfo == PieceInfo.I) {
+        if (pieceColour == PieceColour.I) {
             switch (IRotations.identifyRotationFromMatrix(blockOffsets)) {
                 case CLOCKWISE_ONE:
                     return new int[]{boardX + 1};
@@ -236,7 +236,6 @@ public class Piece {
      * be excluded
      */
     int[] whatColumsIsThisPieceInWithPaddingColumns() {
-        updateMaxMinValues();
 
         // Calculate the minimum offset. The piece can't be outside the board but with padding it could be outside
         // the board
@@ -266,6 +265,10 @@ public class Piece {
         return columns;
     }
 
+    /**
+     * Updates the attributes {@link Piece#minXOffset}, {@link Piece#maxXOffset}, {@link Piece#minYOffset},
+     * {@link Piece#maxYOffset} as they will be inaccurate after the Piece is rotated
+     */
     void updateMaxMinValues() {
         // Find the max and min X offset
         this.maxXOffset = -99;
@@ -284,16 +287,24 @@ public class Piece {
         }
     }
 
+    /**
+     * @return Width of Piece in blocks
+     */
     int calculatePieceWidth() {
         return whatColumsIsThisPieceIn().length;
     }
 
+    /**
+     * @return The Column Index of the rightmost block
+     */
     int getRightMostBlockColumn() {
-        updateMaxMinValues();
         return boardX + maxXOffset;
     }
 
-    enum PieceInfo {
+    /**
+     * Holds information about the colour of each standard Piece
+     */
+    enum PieceColour {
         L(242, 157, 2),
         T(161, 2, 233),
         I(1, 241, 241),
@@ -306,7 +317,7 @@ public class Piece {
         int g;
         int b;
 
-        PieceInfo(int r, int g, int b) {
+        PieceColour(int r, int g, int b) {
             this.r = r;
             this.g = g;
             this.b = b;
@@ -358,14 +369,14 @@ public class Piece {
         O(MatrixUtils.createRealMatrix(new double[][]{{0, 0, 1, 1}, {0, 1, 0, 1}})),
         J(MatrixUtils.createRealMatrix(new double[][]{{0, 1, -1, 1}, {0, 0, 0, 1}}));
 
-        PieceInfo name;
+        PieceColour name;
         RealMatrix blockOffsets;
 
         DefaultPieceRotations(RealMatrix blockOffsets) {
             this.blockOffsets = blockOffsets;
         }
 
-        static DefaultPieceRotations getDefaultPieceRotation(PieceInfo info) {
+        static DefaultPieceRotations getDefaultPieceRotation(PieceColour info) {
             return DefaultPieceRotations.values()[info.ordinal()];
         }
     }
