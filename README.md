@@ -22,3 +22,4 @@ See https://github.com/james27558/Kira-Tetris/wiki/Instructions-for-use---Comman
 - [ ] Implement the function of command line arguments for chaos
 - [ ] Have different block themes available
 - [ ] Have an option to not display the Board while generating images, speeding up the process
+- [ ] Write many many Unit Tests
