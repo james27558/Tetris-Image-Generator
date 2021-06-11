@@ -42,6 +42,8 @@ public class Piece {
         this.stopped = false;
 
         blockOffsets = DefaultPieceRotations.values()[pieceColour.ordinal()].blockOffsets;
+
+        updateMaxMinValues();
     }
 
     /**
@@ -96,26 +98,21 @@ public class Piece {
         updateMaxMinValues();
     }
 
+
     /**
-     * Lower the piece on the board by 1 line. If the lowered piece would overlap other blocks then stop the piece
-     * and return true, otherwise lower the piece and return false.
+     * Hard drops the current Piece onto the board
      *
      * @return true if the piece can't lower and has stopped, false if the piece has lowered
      */
-    boolean lowerPieceOnBoard() {
-        if (wouldNewCenterBeValid(boardX, boardY + 1)) {
-            boardY++;
-        } else {
-//            placePieceOnBoard();
-            return true;
-        }
-
-        return false;
-    }
-
     void hardDropPiece() {
-        while (!lowerPieceOnBoard()) {
-            //System.out.println(boardY);
+        boolean shouldStop = false;
+
+        while (!shouldStop) {
+            if (wouldNewCenterBeValid(boardX, boardY - 1)) {
+                boardY--;
+            } else {
+                shouldStop = true;
+            }
         }
     }
 
@@ -145,7 +142,7 @@ public class Piece {
      * @param newCenterY Row of the new center Y position on the board
      * @return Whether the new center would be a valid position for the piece
      */
-    private boolean wouldNewCenterBeValid(int newCenterX, int newCenterY) {
+    boolean wouldNewCenterBeValid(int newCenterX, int newCenterY) {
         for (int i = 0; i < 4; i++) {
             int blockX = (int) blockOffsets.getEntry(0, i) + newCenterX;
             int blockY = (int) blockOffsets.getEntry(1, i) + newCenterY;
@@ -192,7 +189,7 @@ public class Piece {
         for (int i = 0; i < 4; i++) {
             int blockX = (int) blockOffsets.getEntry(0, i) + boardX;
             int blockY = (int) blockOffsets.getEntry(1, i) + boardY;
-            Board.board.set(blockX, blockY, new Block(blockX, blockY, pieceColour.r, pieceColour.g, pieceColour.b));
+            Board.board.set(blockX, blockY, new Block(pieceColour.r, pieceColour.g, pieceColour.b));
         }
     }
 
@@ -236,6 +233,7 @@ public class Piece {
      * be excluded
      */
     int[] whatColumsIsThisPieceInWithPaddingColumns() {
+        // TODO: Make this function more efficient. Possibly use bound offsets and center position
 
         // Calculate the minimum offset. The piece can't be outside the board but with padding it could be outside
         // the board
@@ -291,7 +289,21 @@ public class Piece {
      * @return Width of Piece in blocks
      */
     int calculatePieceWidth() {
-        return whatColumsIsThisPieceIn().length;
+        // The expression in the bottom return statement doesn't work for the I Piece so we account for that here
+        if (pieceColour == PieceColour.I) {
+            switch (IRotations.identifyRotationFromMatrix(blockOffsets)) {
+                case CLOCKWISE_THREE:
+                case CLOCKWISE_ONE:
+                    return 1;
+
+                case Initial:
+                case CLOCKWISE_TWO:
+                    return 4;
+            }
+        }
+
+        // Otherwise, calculate the width as normal
+        return Math.abs(minXOffset) + 1 + maxXOffset;
     }
 
     /**
@@ -302,16 +314,23 @@ public class Piece {
     }
 
     /**
+     * @return true if the piece is at the edge of the board and it can't move further right, false otherwise
+     */
+    boolean isPieceAtRightEdgeOfBoard() {
+        return boardX + maxXOffset == Board.board.width - 1;
+    }
+
+    /**
      * Holds information about the colour of each standard Piece
      */
     enum PieceColour {
-        L(242, 157, 2),
+        J(242, 157, 2),
         T(161, 2, 233),
         I(1, 241, 241),
         S(2, 239, 0),
         Z(237, 2, 0),
         O(238, 241, 1),
-        J(1, 1, 240);
+        L(1, 1, 240);
 
         int r;
         int g;
@@ -321,6 +340,18 @@ public class Piece {
             this.r = r;
             this.g = g;
             this.b = b;
+        }
+
+        static String identifyColourName(int r, int g, int b) {
+            for (PieceColour pieceColour : PieceColour.values()) {
+                if (pieceColour.r == r && pieceColour.g == g && pieceColour.b == b) return pieceColour.name();
+            }
+
+            return null;
+        }
+
+        static String identifyColourName(Block block) {
+            return identifyColourName(block.r, block.g, block.b);
         }
     }
 

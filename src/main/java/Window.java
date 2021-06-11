@@ -32,7 +32,8 @@ public class Window extends PApplet {
     static void parseArguments(String[] args) {
         // No args. Print help message and exit
         if (args.length == 0) {
-            System.out.println("Default argument order: [WIDTH] [HEIGHT] [DIAMETER] [HEIGHT DIFFERENCE] [CHAOS] [OPTIONAL ARGUMENTS]");
+            System.out.println("Default argument order: [WIDTH] [HEIGHT] [DIAMETER] [HEIGHT DIFFERENCE] [CHAOS] " +
+                    "[OPTIONAL ARGUMENTS]");
 
             System.out.println("    WIDTH: Integer - Width of the board in blocks");
             System.out.println("    HEIGHT: Integer - Height of the board in blocks");
@@ -202,6 +203,9 @@ public class Window extends PApplet {
         }
     }
 
+    /**
+     *
+     */
     public void settings() {
 
         size(widthInBlocks * cellDiameter, heightInBlocks * cellDiameter);
@@ -225,8 +229,12 @@ public class Window extends PApplet {
             background(51);
             strokeWeight(1);
 
-            drawBackboard();
+//            drawBackboard();
             drawPlacedBlocks();
+
+            fill(255);
+            text("Piece: " + Piece.PieceColour.identifyColourName(Board.currentPiece.pieceColour.r,
+                    Board.currentPiece.pieceColour.g, Board.currentPiece.pieceColour.b), 20, 20);
         }
 
 
@@ -239,8 +247,8 @@ public class Window extends PApplet {
             saveCount++;
         }
 
-        if (frameCount % 10 == 0 && placePieces) {
-            for (int i = 0; i < 1; i++) {
+        if (frameCount % 2 == 0 && placePieces) {
+            for (int i = 0; i < 1000; i++) {
                 board.simulateCurrentPiece();
                 Board.loadNextPieceFromQueue();
             }
@@ -249,6 +257,8 @@ public class Window extends PApplet {
     }
 
     void drawBackboard() {
+        stroke(0.8f);
+
         for (int i = 0; i < board.board.width; i++) {
             line(i * cellDiameter, 0, i * cellDiameter, height);
         }
@@ -259,16 +269,16 @@ public class Window extends PApplet {
     }
 
     void drawPlacedBlocks() {
-        stroke(0);
         noStroke();
-        // The j = offset and (j - offset) account for the extra (offset) rows that are above what we are drawing
-        for (int j = Board.board.offset; j < Board.board.height; j++) {
+
+        for (int j = 0; j < Board.board.visibleHeight; j++) {
             for (int i = 0; i < Board.board.width; i++) {
                 Block currentBlock = Board.board.getBlock(i, j);
 
                 if (currentBlock != null) {
                     fill(currentBlock.r, currentBlock.g, currentBlock.b);
-                    rect(i * cellDiameter, (j - Board.board.offset) * cellDiameter, cellDiameter, cellDiameter);
+                    rect(i * cellDiameter, height - ((j + 1) * cellDiameter), cellDiameter,
+                            cellDiameter);
                 }
             }
         }

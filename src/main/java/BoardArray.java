@@ -3,32 +3,61 @@ public class BoardArray {
     int offset;
 
     int height;
+    int visibleHeight;
     int width;
 
     BoardArray(int width, int height) {
         // Make the offset the height / 4 if it is bigger than 4, else make it 4
-        offset = (height / 4 > 4) ? height / 4 : 4;
+        offset = Window.max(height / 4, 4);
 
         array = new Block[height + offset][width];
         this.height = height + offset;
+        this.visibleHeight = height;
         this.width = width;
     }
 
+    /**
+     * Transforms the y index from being array focused (index 0 is the top row of the board, the 0th array) to being
+     * Board focused (index 0 is the bottom row of the board)
+     *
+     * @param y Y index to transform
+     * @return Board focused y index
+     */
+    int getY(int y) {
+        return height - 1 - y;
+    }
+
     Block getBlock(int x, int y) {
-        return array[y][x];
+        return array[getY(y)][x];
     }
 
     void set(int x, int y, Block block) {
-        array[y][x] = block;
+        array[getY(y)][x] = block;
     }
 
-    void set(Block block) {
-        array[block.boardY][block.boardX] = block;
-    }
 
+    /**
+     * Gets a row of Blocks form the BoardArray
+     * @param y Row index to get
+     * @return Line of Blocks at index y
+     */
     Block[] getLine(int y) {
         return array[y];
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
 
+        for (int j = 0; j < height; j++) {
+            for (Block block : array[j]) {
+                sb.append(block == null ? "." : block);
+                sb.append(" ");
+            }
+
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
 }

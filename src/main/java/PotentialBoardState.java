@@ -24,14 +24,12 @@ public class PotentialBoardState {
     /**
      * @return The piece that is defined by this BoardState.
      */
-    Piece producePiece() {
+    Piece getPlacedPiece() {
         Piece newPiece = new Piece(pieceColour, pieceX, pieceY);
 
         for (int i = 0; i < rotateCount; i++) {
             newPiece.rotatePieceClockwise();
         }
-
-        newPiece.updateMaxMinValues();
 
         return newPiece;
     }

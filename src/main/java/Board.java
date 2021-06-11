@@ -2,18 +2,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 
-public class Board {
+class Board {
     static BoardArray board;
     static Piece currentPiece;
     static Piece.PieceColour holdPieceColour;
 
-    static Random random;
-    static int pieceStartX = 3;
-    static int pieceStartY = 2;
+    private static Random random;
+    private static int pieceStartX = 3;
+    private static int pieceStartY = 2;
     static boolean canHold = true;
-    static ArrayList<Piece.PieceColour> currentPieceList;
-    static ArrayList<Piece.PieceColour> nextPieceList;
-    static int pieceCount = 0;
+    private static ArrayList<Piece.PieceColour> currentPieceList;
+    private static ArrayList<Piece.PieceColour> nextPieceList;
+    private static int pieceCount = 0;
 
     static {
         if (Window.argSeed == -1) {
@@ -34,8 +34,8 @@ public class Board {
         currentPiece = new Piece(currentPieceList.remove(0), pieceStartX, pieceStartY);
     }
 
-    static ArrayList<Piece.PieceColour> generatePieceList() {
-        ArrayList piecelist = new ArrayList<Piece.PieceColour>();
+    private static ArrayList<Piece.PieceColour> generatePieceList() {
+        ArrayList<Piece.PieceColour> piecelist = new ArrayList<>();
 
         for (Piece.PieceColour piece : Piece.PieceColour.values()) {
             piecelist.add(piece);
@@ -47,12 +47,6 @@ public class Board {
         return piecelist;
     }
 
-    static void hardDropCurrentPiece() {
-        while (!currentPiece.lowerPieceOnBoard()) {
-        }
-
-        loadNextPieceFromQueue();
-    }
 
     static void loadNextPieceFromQueue() {
         if (currentPieceList.size() > 0) {
@@ -62,12 +56,6 @@ public class Board {
             nextPieceList = generatePieceList();
 
             currentPiece = new Piece(currentPieceList.remove(0), pieceStartX, pieceStartY);
-        }
-    }
-
-    static void lowerCurrentPiece() {
-        if (currentPiece.lowerPieceOnBoard()) {
-            loadNextPieceFromQueue();
         }
     }
 
@@ -103,12 +91,14 @@ public class Board {
         }
     }
 
-    static boolean doColumnsContainHoles(int[] columns) {
+    private static boolean doColumnsContainHoles(int[] columns) {
         for (int columnIndex : columns) {
             // For all blocks in the column except the lowest layer
-            for (int i = 0; i < board.height - 1; i++) {
-                // If there is a block with a hole underneath it
-                if (board.getBlock(columnIndex, i) != null && board.getBlock(columnIndex, i + 1) == null) return true;
+            for (int i = board.visibleHeight - 1; i > 0; i--) {
+                // If there is a block with a hole underneath it, return true
+                Block thisBlock = board.getBlock(columnIndex, i);
+                Block underneathBlock = board.getBlock(columnIndex, i - 1);
+                if (thisBlock != null && underneathBlock == null) return true;
             }
         }
 
@@ -116,9 +106,9 @@ public class Board {
     }
 
     /**
-     * @return The height difference of the board in blocks
+     * @return The height difference of the board in blocks, a level board has a height difference of 0
      */
-    static int calculateBoardHeightDiff() {
+    private static int calculateBoardHeightDiff() {
         // Initialise variables to their max value, they will be modified by this function
         int minHeight = Integer.MAX_VALUE;
         int maxHeight = Integer.MIN_VALUE;
@@ -127,16 +117,20 @@ public class Board {
         for (int i = 0; i < board.width; i++) {
 
             // Move down the column until we find a block
-            for (int j = 0; j < board.height; j++) {
-                if (j == board.height - 1) maxHeight = j;
+            // Start at the top of the Board, index visibleHeight - 1
+            for (int j = board.visibleHeight - 1; j >= 0; j--) {
 
+                // If we see a block then we can stop for this column
                 if (board.getBlock(i, j) != null) {
-                    if (j < minHeight) minHeight = j;
+                    // Set it as the new maximum height if it is bigger than the current maximum
                     if (j > maxHeight) maxHeight = j;
-                    // Stop searching the column when the block is reached
+                    // Set it as the new minimum height if it is smaller than the current minimum
+                    if (j < minHeight) minHeight = j;
+
                     break;
                 }
             }
+
 
         }
 
@@ -167,32 +161,49 @@ public class Board {
                 break;
         }
 
-        ArrayList<PotentialBoardState> allOptions = new ArrayList();
+        ArrayList<PotentialBoardState> allOptions = new ArrayList<>();
 
         // Repeat for all rotations
         for (int rotateCount = 0; rotateCount <= numberOfTimesToRotate; rotateCount++) {
-            // Update the min and max values for the piece as it has been rotated
-            currentPiece.updateMaxMinValues();
-            // Move the piece so it is flush with the left side of the board
+            // Move the piece so it is flush with the top left side of the board
             currentPiece.boardX = Math.abs(currentPiece.minXOffset);
+            // Every time we drop the Piece, we need to reset it so that it's flush with the top of the board
+            int yReset = board.height - 1 - currentPiece.maxYOffset;
+
 
             // If the I piece is vertical such that its center block is to the left of the piece, start the center block
             // at -1 so that the line piece is flush with the left side of the board
             if (currentPiece.pieceColour == Piece.PieceColour.I && rotateCount == 1) currentPiece.boardX = -1;
 
+            // For the first piece, start it at the top of the board, at the end of the loop this will happen for the
+            // piece after it
+            currentPiece.boardY = yReset;
             // Repeat while the edge of the piece hasn't reached the edge of the board
-            for (int i = 0; i <= board.width - currentPiece.calculatePieceWidth(); i++) {
-                currentPiece.boardY = 2;
+            do {
+
+                // If where the Piece spawns is obstructed then move it right, don't try and simulate the hard drop
+                if (!currentPiece.wouldNewCenterBeValid(currentPiece.boardX, currentPiece.boardY)) {
+                    continue;
+                }
+
+                // Otherwise, hard drop the piece
                 currentPiece.hardDropPiece();
 
+                // Place the Piece on the board
                 currentPiece.placePieceOnBoard();
+                if (Window.debug) System.out.println(board);
+
+                // If the board doesn't contain any holes after the piece has been placed then add the board state
+                // into the list of candidates
                 if (!doColumnsContainHoles(currentPiece.whatColumsIsThisPieceInWithPaddingColumns()))
                     allOptions.add(new PotentialBoardState(currentPiece.pieceColour, currentPiece.boardX,
                             currentPiece.boardY, rotateCount, calculateBoardHeightDiff()));
-                currentPiece.removePieceOnBoard();
 
-                currentPiece.boardX++;
-            }
+                currentPiece.removePieceOnBoard();
+                if (Window.debug) System.out.println(board);
+
+                currentPiece.boardY = yReset;
+            } while (currentPiece.movePieceRight());
 
             currentPiece.rotatePieceClockwise();
         }
@@ -209,8 +220,9 @@ public class Board {
         if (Window.logging && currentPiece.pieceColour == Piece.PieceColour.I) {
             System.out.println("Best candidate: " + bestCandidate);
         }
+
         if (bestCandidate != null) {
-            bestCandidate.producePiece().placePieceOnBoard();
+            bestCandidate.getPlacedPiece().placePieceOnBoard();
             pieceCount++;
         } else {
 

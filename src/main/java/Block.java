@@ -3,34 +3,18 @@
  */
 public class Block {
 
-    int boardX;
-    int boardY;
     int r;
     int g;
     int b;
 
     /**
-     * Initialises the block on the board with the colour black rgb(0,0,0)
-     *
-     * @param boardX
-     * @param boardY
-     */
-    Block(int boardX, int boardY) {
-        this.boardX = boardX;
-        this.boardY = boardY;
-    }
+     * Initialises the block with a given colour
 
-    /**
-     * Initialises the block on the board with a given colour
-     * @param boardX
-     * @param boardY
      * @param r Red component, 0 - 255
      * @param g Green component, 0 - 255
      * @param b Blue component, 0 - 255
      */
-    Block(int boardX, int boardY, int r, int g, int b) {
-        this(boardX, boardY);
-
+    Block(int r, int g, int b) {
         this.r = r;
         this.g = g;
         this.b = b;
@@ -58,4 +42,8 @@ public class Block {
         b = block.b;
     }
 
+    @Override
+    public String toString() {
+        return Piece.PieceColour.identifyColourName(r, g, b);
+    }
 }
