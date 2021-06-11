@@ -1,8 +1,10 @@
+package core;
+
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
 /**
- * Represent a piece on the board. Piece position is defined from a center and block offsets.
+ * Represent a piece on the board. core.Piece position is defined from a center and block offsets.
  */
 public class Piece {
 
@@ -21,21 +23,21 @@ public class Piece {
     RealMatrix blockOffsets;
 
     // Position
-    int boardX;
-    int boardY;
+    public int boardX;
+    public int boardY;
 
     // Control
     boolean stopped;
 
     /**
-     * Initialises the Piece with a preset set of block offsets using the default set of pieces at a given position
-     * on the board. The Piece will be constructed with the deafult rotation for the given Piece
+     * Initialises the core.Piece with a preset set of block offsets using the default set of pieces at a given position
+     * on the board. The core.Piece will be constructed with the deafult rotation for the given core.Piece
      *
-     * @param pieceColour Piece type to inherit default block positions from
+     * @param pieceColour core.Piece type to inherit default block positions from
      * @param boardX
      * @param boardY
      */
-    Piece(PieceColour pieceColour, int boardX, int boardY) {
+    public Piece(PieceColour pieceColour, int boardX, int boardY) {
         this.pieceColour = pieceColour;
         this.boardX = boardX;
         this.boardY = boardY;
@@ -47,7 +49,7 @@ public class Piece {
     }
 
     /**
-     * Check if a given index is out of bounds of the Board
+     * Check if a given index is out of bounds of the core.Board
      *
      * @param x
      * @param y
@@ -58,15 +60,16 @@ public class Piece {
     }
 
     /**
-     * Rotates the Piece clockwise. Doesn't do any error checking or check if the rotation would make the Piece
+     * Rotates the core.Piece clockwise. Doesn't do any error checking or check if the rotation would make the core
+     * .Piece
      * overlap with existing Pieces on the board. Updates the bound offsets afterwards
      */
     void rotatePieceClockwise() {
-        // The O Piece doesn't rotate
+        // The O core.Piece doesn't rotate
         if (pieceColour == PieceColour.O) return;
 
         // Rotate the piece
-        // The I Piece must be handled seperately, otherwise rotate using matrix multiplication
+        // The I core.Piece must be handled seperately, otherwise rotate using matrix multiplication
         if (pieceColour == PieceColour.I) {
             IRotations currentRotation = IRotations.identifyRotationFromMatrix(blockOffsets);
             blockOffsets = currentRotation.getClockwiseRotation().blockOffsets;
@@ -79,14 +82,14 @@ public class Piece {
     }
 
     /**
-     * Rotates the Piece counterclockwise. Doesn't do any error checking or check if the rotation would make the Piece
+     * Rotates the core.Piece counterclockwise. Doesn't do any error checking or check if the rotation would make the core.Piece
      * overlap with existing Pieces on the board. Updates the bound offsets afterwards
      */
     void rotatePieceCounterClockwise() {
         if (pieceColour == PieceColour.O) return;
 
         // Rotate the piece
-        // The I Piece must be handled seperately, otherwise rotate using matrix multiplication
+        // The I core.Piece must be handled seperately, otherwise rotate using matrix multiplication
         if (pieceColour == PieceColour.I) {
             IRotations currentRotation = IRotations.identifyRotationFromMatrix(blockOffsets);
             blockOffsets = currentRotation.getCounterClockwiseRotation().blockOffsets;
@@ -100,7 +103,7 @@ public class Piece {
 
 
     /**
-     * Hard drops the current Piece onto the board
+     * Hard drops the current core.Piece onto the board
      *
      * @return true if the piece can't lower and has stopped, false if the piece has lowered
      */
@@ -156,12 +159,13 @@ public class Piece {
     }
 
     /**
-     * Moves the Piece left by one block. The move wont occur if the Piece isn't able to move i.e. it is blocked by a
-     * block or the edge of the Board
-     * @return true if the Piece has successfully moved, false if the Piece was blocked
+     * Moves the core.Piece left by one block. The move wont occur if the core.Piece isn't able to move i.e. it is
+     * blocked by a
+     * block or the edge of the core.Board
+     * @return true if the core.Piece has successfully moved, false if the core.Piece was blocked
      */
     boolean movePieceLeft() {
-        // Check if the new blocks position overlaps with existing blocks, if not, move the Piece
+        // Check if the new blocks position overlaps with existing blocks, if not, move the core.Piece
         if (wouldNewCenterBeValid(boardX - 1, boardY)) {
             boardX--;
             return true;
@@ -171,12 +175,13 @@ public class Piece {
     }
 
     /**
-     * Moves the Piece right by one block. The move wont occur if the Piece isn't able to move i.e. it is blocked by a
-     * block or the edge of the Board
-     * @return true if the Piece has successfully moved, false if the Piece was blocked
+     * Moves the core.Piece right by one block. The move wont occur if the core.Piece isn't able to move i.e. it is
+     * blocked by a
+     * block or the edge of the core.Board
+     * @return true if the core.Piece has successfully moved, false if the core.Piece was blocked
      */
     boolean movePieceRight() {
-        // Check if the new blocks position overlaps with existing blocks, if not, move the Piece
+        // Check if the new blocks position overlaps with existing blocks, if not, move the core.Piece
         if (wouldNewCenterBeValid(boardX + 1, boardY)) {
             boardX++;
             return true;
@@ -185,7 +190,7 @@ public class Piece {
         }
     }
 
-    void placePieceOnBoard() {
+    public void placePieceOnBoard() {
         for (int i = 0; i < 4; i++) {
             int blockX = (int) blockOffsets.getEntry(0, i) + boardX;
             int blockY = (int) blockOffsets.getEntry(1, i) + boardY;
@@ -216,7 +221,7 @@ public class Piece {
             }
         }
 
-        // If it isn't an I Piece in those specific rotations, calculate the columns the default way
+        // If it isn't an I core.Piece in those specific rotations, calculate the columns the default way
         int index = 0;
         int[] columns = new int[maxXOffset + Math.abs(minXOffset) + 1];
         for (int i = boardX + minXOffset; i <= boardX + maxXOffset; i++) {
@@ -265,7 +270,7 @@ public class Piece {
 
     /**
      * Updates the attributes {@link Piece#minXOffset}, {@link Piece#maxXOffset}, {@link Piece#minYOffset},
-     * {@link Piece#maxYOffset} as they will be inaccurate after the Piece is rotated
+     * {@link Piece#maxYOffset} as they will be inaccurate after the core.Piece is rotated
      */
     void updateMaxMinValues() {
         // Find the max and min X offset
@@ -286,10 +291,10 @@ public class Piece {
     }
 
     /**
-     * @return Width of Piece in blocks
+     * @return Width of core.Piece in blocks
      */
     int calculatePieceWidth() {
-        // The expression in the bottom return statement doesn't work for the I Piece so we account for that here
+        // The expression in the bottom return statement doesn't work for the I core.Piece so we account for that here
         if (pieceColour == PieceColour.I) {
             switch (IRotations.identifyRotationFromMatrix(blockOffsets)) {
                 case CLOCKWISE_THREE:
@@ -321,9 +326,9 @@ public class Piece {
     }
 
     /**
-     * Holds information about the colour of each standard Piece
+     * Holds information about the colour of each standard core.Piece
      */
-    enum PieceColour {
+    public enum PieceColour {
         J(242, 157, 2),
         T(161, 2, 233),
         I(1, 241, 241),
@@ -356,10 +361,11 @@ public class Piece {
     }
 
     /**
-     * This enum contains preset block offsets for the I Piece in all rotations.
+     * This enum contains preset block offsets for the I core.Piece in all rotations.
      * <p>
-     * All Piece rotations apart from the I Piece can be calculated using clockwise and counterclockwise roatation
-     * matricies. However, since the I Piece's center of rotation isn't in the middle of a block, it's in between the
+     * All core.Piece rotations apart from the I core.Piece can be calculated using clockwise and counterclockwise
+     * roatation
+     * matricies. However, since the I core.Piece's center of rotation isn't in the middle of a block, it's in between the
      * corners of the two middle blocks, we can't use a rotation matrix for it.
      */
     private enum IRotations {
@@ -370,7 +376,7 @@ public class Piece {
 
         private RealMatrix blockOffsets;
 
-        private IRotations(RealMatrix blockOffsets) {
+        IRotations(RealMatrix blockOffsets) {
             this.blockOffsets = blockOffsets;
         }
 

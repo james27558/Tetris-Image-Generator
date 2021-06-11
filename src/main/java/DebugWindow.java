@@ -1,3 +1,7 @@
+import core.Block;
+import core.Board;
+import core.Piece;
+import core.Window;
 import processing.core.PApplet;
 
 public class DebugWindow extends Window {

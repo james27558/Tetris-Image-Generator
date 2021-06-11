@@ -1,3 +1,5 @@
+package core;
+
 /**
  * Represents a single individual square on the board.
  */
@@ -9,12 +11,11 @@ public class Block {
 
     /**
      * Initialises the block with a given colour
-
      * @param r Red component, 0 - 255
      * @param g Green component, 0 - 255
      * @param b Blue component, 0 - 255
      */
-    Block(int r, int g, int b) {
+    public Block(int r, int g, int b) {
         this.r = r;
         this.g = g;
         this.b = b;
@@ -26,7 +27,7 @@ public class Block {
      * @param g Green component, 0 - 255
      * @param b Blue component, 0 - 255
      */
-    void setColour(int r, int g, int b) {
+    public void setColour(int r, int g, int b) {
         this.r = r;
         this.g = g;
         this.b = b;
@@ -34,7 +35,7 @@ public class Block {
 
     /**
      * Sets the colour to that of another block
-     * @param block Block to copy the colour from
+     * @param block core.Block to copy the colour from
      */
     void setColour(Block block) {
         r = block.r;

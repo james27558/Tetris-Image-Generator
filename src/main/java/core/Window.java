@@ -1,24 +1,26 @@
+package core;
+
 import processing.core.PApplet;
 
 public class Window extends PApplet {
     static Board board = null;
 
     // Input arguments
-    static int heightInBlocks;
-    static int widthInBlocks;
-    static int cellDiameter;
+    public static int heightInBlocks;
+    public static int widthInBlocks;
+    public static int cellDiameter;
     static int heightDiff;
-    static int chaos;
+    static float chaos;
 
     static boolean logging = true;
     static boolean placePieces = true;
     static boolean shouldSaveAndResetBoard = false;
     static int saveCount = 0;
-    static boolean debug = false;
+    static boolean debug = true;
 
     // User Settings
     static String argFiletype = ".tiff"; // Default .tiff
-    static int argSeed = 0;
+    static int argSeed = 1;
     static int argOutputNum = 1; // Default 1
 
     static long start = System.currentTimeMillis();
@@ -26,7 +28,7 @@ public class Window extends PApplet {
 
     public static void main(String[] args) {
         parseArguments(args);
-        PApplet.main("Window");
+        PApplet.main("core.Window");
     }
 
     static void parseArguments(String[] args) {
@@ -104,8 +106,8 @@ public class Window extends PApplet {
 
         // Validate CHAOS
         try {
-            chaos = Integer.valueOf(args[4]);
-            if (!(chaos >= 0 && chaos <= 100)) errorMessage = "CHAOS should be an integer between 0 and 100";
+            chaos = Integer.valueOf(args[4]) / 100f;
+            if (!(chaos >= 0f && chaos <= 1f)) errorMessage = "CHAOS should be an integer between 0 and 100";
         } catch (Exception e) {
             errorMessage = "CHAOS argument is not valid";
         }
@@ -211,7 +213,7 @@ public class Window extends PApplet {
         size(widthInBlocks * cellDiameter, heightInBlocks * cellDiameter);
         board = new Board(widthInBlocks, heightInBlocks);
 
-//        Piece p = new Piece(Piece.PieceColour.L, 5,10);
+//        core.Piece p = new core.Piece(core.Piece.PieceColour.L, 5,10);
 //        p.rotatePieceClockwise();
 //        p.rotatePieceClockwise();
 //        p.placePieceOnBoard();
@@ -233,7 +235,7 @@ public class Window extends PApplet {
             drawPlacedBlocks();
 
             fill(255);
-            text("Piece: " + Piece.PieceColour.identifyColourName(Board.currentPiece.pieceColour.r,
+            text("core.Piece: " + Piece.PieceColour.identifyColourName(Board.currentPiece.pieceColour.r,
                     Board.currentPiece.pieceColour.g, Board.currentPiece.pieceColour.b), 20, 20);
         }
 
@@ -248,7 +250,7 @@ public class Window extends PApplet {
         }
 
         if (frameCount % 2 == 0 && placePieces) {
-            for (int i = 0; i < 1000; i++) {
+            for (int i = 0; i < 1; i++) {
                 board.simulateCurrentPiece();
                 Board.loadNextPieceFromQueue();
             }
@@ -256,19 +258,19 @@ public class Window extends PApplet {
 
     }
 
-    void drawBackboard() {
+    protected void drawBackboard() {
         stroke(0.8f);
 
-        for (int i = 0; i < board.board.width; i++) {
+        for (int i = 0; i < Board.board.width; i++) {
             line(i * cellDiameter, 0, i * cellDiameter, height);
         }
 
-        for (int i = 0; i < board.board.height; i++) {
+        for (int i = 0; i < Board.board.height; i++) {
             line(0, i * cellDiameter, width, i * cellDiameter);
         }
     }
 
-    void drawPlacedBlocks() {
+    protected void drawPlacedBlocks() {
         noStroke();
 
         for (int j = 0; j < Board.board.visibleHeight; j++) {
