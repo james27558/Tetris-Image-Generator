@@ -2,14 +2,18 @@ package core;
 
 public class PotentialBoardState {
 
-    Piece.PieceColour pieceColour;
+    private static float heightDiffMultiplier;
+    private static float bumpinessMultiplier;
+    private static float goalDistScoreMultiplier;
+
+    private Piece.PieceColour pieceColour;
     int pieceX;
     int pieceY;
-    int rotateCount;
-    int boardHeightDiff;
+    private int rotateCount;
+    private int boardHeightDiff;
     float score;
 
-    float bumpyness;
+    private float bumpiness;
 
     /*
     This class holds information about the board after a piece was placed
@@ -21,15 +25,31 @@ public class PotentialBoardState {
         this.rotateCount = rotateCount;
         this.boardHeightDiff = boardHeightDiff;
 
-        this.bumpyness = 1;
+        this.bumpiness = 0;
+        // Calculate bumpiness
         for (int i = 0; i < Board.board.width - 1; i++) {
-            bumpyness += Math.abs(getColumnHeight(i) - getColumnHeight(i + 1));
+            bumpiness += Math.abs(Board.getColumnHeight(i) - Board.getColumnHeight(i + 1));
         }
 
-        // The closer the absolute value of the score is to 0, the more desirable it is
-        score = (float) (Math.pow(Window.heightDiff - boardHeightDiff, 2) * Window.norm(pieceY, 0,
-                Board.board.height)) * (bumpyness * 0.1f);
-        if (pieceColour == Piece.PieceColour.I && (rotateCount == 1 || rotateCount == 3)) score *= 0.5f;
+
+        // Difference between the target height difference and the height difference of the board
+        float heightDiffDifference = Math.abs(Window.heightDiff - boardHeightDiff);
+
+        // Distance between the current goal X and this piece's X position
+        // TODO: Perhaps change the goalDist to be the euclidean distance between the tower goal and this piece, see
+        //  how it affects the shape of towers
+        float goalDistScore = 0;
+        if (goalDistScoreMultiplier != 0) {
+            float goalDist = Math.abs((Board.currentTowerGoal.getBoardX() - pieceX));
+            goalDistScore = (float) Math.exp(goalDist / 10f);
+
+        }
+
+
+        // The closer the score is to 0, the more desirable it is
+        score =
+                (heightDiffMultiplier * heightDiffDifference) + (bumpinessMultiplier * bumpiness * 2) + (goalDistScoreMultiplier * goalDistScore);
+
     }
 
     /**
@@ -45,17 +65,23 @@ public class PotentialBoardState {
         return newPiece;
     }
 
-    int getColumnHeight(int x) {
-        for (int i = Board.board.visibleHeight - 1; i >= 0; i--) {
-            if (Board.board.getBlock(x, i) != null) return i;
-        }
+    // TODO: Move multiplier setting in Window to this class with presets for flat stacking and tower stacking
 
-        return 0;
+    static void setHeightDiffMultiplier(float heightDiffMultiplier) {
+        PotentialBoardState.heightDiffMultiplier = heightDiffMultiplier;
+    }
+
+    static void setBumpinessMultiplier(float bumpinessMultiplier) {
+        PotentialBoardState.bumpinessMultiplier = bumpinessMultiplier;
+    }
+
+    static void setGoalDistScoreMultiplier(float goalDistScoreMultiplier) {
+        PotentialBoardState.goalDistScoreMultiplier = goalDistScoreMultiplier;
     }
 
     public String toString() {
         return pieceColour.name() + " piece | X : " + pieceX + " | Y : " + pieceY + " | RC : " + rotateCount + " | " +
-                "HD : " + boardHeightDiff + " | B : " + bumpyness + " | Score : " + score;
+                "HD : " + boardHeightDiff + " | B : " + bumpiness + " | Score : " + score;
     }
 
 }

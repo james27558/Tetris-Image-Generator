@@ -12,6 +12,9 @@ public class Board {
     static Piece currentPiece;
     static PieceColour holdPieceColour;
 
+    static ArrayList<TowerGoal> towerGoals;
+    static TowerGoal currentTowerGoal;
+
     private static Random random;
     private static int pieceStartX = 3;
     private static int pieceStartY = 2;
@@ -32,21 +35,51 @@ public class Board {
     Board(int widthInBlocks, int heightInBlocks) {
         board = new BoardArray(widthInBlocks, heightInBlocks);
 
+        if (Window.heightDiff != 0) generateTowerGoals();
+
         currentPieceList = Board.generatePieceList();
 
         currentPiece = new Piece(currentPieceList.remove(0), pieceStartX, pieceStartY);
     }
 
+    /**
+     * Generates a random number of Tower goals between 1 and 5 and sets the first goal as the current goal. Wipes
+     * the list of current Tower goals
+     */
+    static private void generateTowerGoals() {
+        // Reset the list of Tower Goals
+        towerGoals = new ArrayList<>();
+
+        // Generate a random number of Tower goals between 1 and 5
+        for (int i = 0; i < random.nextInt(5) + 1; i++) {
+            int xGoal = (int) Window.map(random.nextFloat(), 0, 1, 0, board.width - 1);
+            int yGoal = (int) Window.map(random.nextFloat(), 0, 1, 0, board.visibleHeight);
+
+            towerGoals.add(new TowerGoal(xGoal, yGoal));
+        }
+
+        currentTowerGoal = towerGoals.get(0);
+    }
+
+    /**
+     * Generates a shuffled PieceColour list with all 7 tetrominos with no duplicate Pieces
+     *
+     * @return A shuffled PieceColour list with all 7 tetrominos
+     */
     public static ArrayList<PieceColour> generatePieceList() {
-
+        // Fill the piece list with all tetrominos
         ArrayList<PieceColour> piecelist = new ArrayList<>(Arrays.asList(PieceColour.values()));
-
+        // Shuffle the array list in place
         Collections.shuffle(piecelist, random);
 
         return piecelist;
     }
 
-
+    /**
+     * If the currentPieceList isn't empty, the PieceColour at index 0 is taken from the list and made into the current
+     * Piece. If the currentPieceList is empty then a new PieceColour list is generated and the member at the start
+     * of the sequence is made into the current Piece.
+     */
     static void loadNextPieceFromQueue() {
         if (!currentPieceList.isEmpty()) {
             currentPiece = new Piece(currentPieceList.remove(0), pieceStartX, pieceStartY);
@@ -57,23 +90,12 @@ public class Board {
         }
     }
 
-    static boolean isLineComplete(Block[] line) {
-        for (Block block : line) {
-            if (block == null) return false;
-        }
-
-        return true;
-    }
-
-    static boolean isLineEmpty(Block[] line) {
-        for (Block block : line) {
-            if (block != null) return false;
-        }
-
-        return true;
-    }
-
-
+    /**
+     * Checks if columns in the Board contain any holes
+     *
+     * @param columns List of column indices to check
+     * @return true if any of those columns contain any holes, false otherwise
+     */
     private static boolean doColumnsContainHoles(int[] columns) {
         for (int columnIndex : columns) {
             // For all blocks in the column except the lowest layer
@@ -120,7 +142,12 @@ public class Board {
         return maxHeight - minHeight;
     }
 
+    /**
+     *
+     */
     static void resetBoard() {
+        generateTowerGoals();
+
         for (int i = 0; i < board.width; i++) {
             for (int j = 0; j < board.height; j++) {
                 board.set(i, j, null);
@@ -128,7 +155,32 @@ public class Board {
         }
     }
 
-    void simulateCurrentPiece() {
+    static int getColumnHeight(int x) {
+        for (int i = Board.board.visibleHeight - 1; i >= 0; i--) {
+            if (Board.board.getBlock(x, i) != null) return i;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Checks if the Board has no holes, in other words the Board is "perfect"
+     *
+     * @return true if the Board is perfect, false otherwise
+     */
+    private static boolean isBoardPerfect() {
+
+        for (int i = 0; i < board.width; i++) {
+            for (int j = 0; j < board.visibleHeight; j++) {
+                if (board.getBlock(i, j) == null) return false;
+            }
+        }
+
+        return true;
+    }
+
+    static void simulateCurrentPiece() {
+        // TODO: Move getting all possible Piece positions into another function
 
         // Calculate the number of times we need to rotate the piece
         int numberOfTimesToRotate;
@@ -164,7 +216,8 @@ public class Board {
             // Repeat while the edge of the piece hasn't reached the edge of the board
             do {
 
-                // If where the Piece spawns is obstructed then move it right, don't try and simulate the hard drop
+                // If where the Piece spawns is obstructed then continue the loop to move it right, don't try and
+                // simulate the hard drop
                 if (!currentPiece.wouldNewCenterBeValid(currentPiece.boardX, currentPiece.boardY)) {
                     continue;
                 }
@@ -194,30 +247,41 @@ public class Board {
         // Now that all positions have been simulated, we need to pick a position to use
         PotentialBoardState bestCandidate = pickCandidate(allOptions);
 
-        if (Window.logging && currentPiece.pieceColour == PieceColour.I) {
+        if (Window.logging) {
             for (PotentialBoardState state : allOptions) {
                 System.out.println(state);
             }
-        }
 
-        if (Window.logging && currentPiece.pieceColour == PieceColour.I) {
             System.out.println("Best candidate: " + bestCandidate);
         }
 
         if (bestCandidate != null) {
             bestCandidate.getPlacedPiece().placePieceOnBoard();
             pieceCount++;
-        } else {
 
-            int nullCount = 0;
-            for (int i = 0; i < board.width; i++) {
-                for (int j = 0; j < board.visibleHeight; j++) {
-                    if (board.getBlock(i, j) == null) nullCount++;
+            // If we are making Towers then check if we have reached the current goal
+            if (Window.heightDiff != 0) {
+                // If the placed Piece is close to the current Tower goal
+                if (Window.dist(bestCandidate.pieceX, bestCandidate.pieceY, currentTowerGoal.getBoardX(),
+                        currentTowerGoal.getBoardY()) < 2) {
+                    // Then this Tower is complete, we can remove it from the list
+                    towerGoals.remove(0);
+
+                    // If there are no Towers left to make, move onto the heightDiff phase
+                    if (towerGoals.isEmpty()) {
+                        // TODO: Add height difference phase
+                        System.out.println("Height diff phase");
+                        Window.placePieces = false;
+                    } else {
+                        // Otherwise, there are still Towers to create, so we should set the next Tower goal as our
+                        // current goal
+                        currentTowerGoal = towerGoals.get(0);
+                    }
                 }
             }
-
-
-            if (nullCount == 0) {
+        } else {
+            // Otherwise, check if the board is perfect
+            if (isBoardPerfect()) {
                 System.out.println("Perfect core.Board " + pieceCount);
                 Window.shouldSaveAndResetBoard = true;
 
@@ -237,12 +301,12 @@ public class Board {
      * @param candidates All potential board states
      * @return Best candidate
      */
-    private PotentialBoardState pickCandidate(ArrayList<PotentialBoardState> candidates) {
+    static private PotentialBoardState pickCandidate(ArrayList<PotentialBoardState> candidates) {
         if (candidates.size() == 0) return null;
 
         // If there are equally good candidates, they'll be put in this list
         ArrayList<PotentialBoardState> filteredCandidates = new ArrayList<>();
-        float lowestScore = 9999;
+        float lowestScore = Integer.MAX_VALUE;
         for (PotentialBoardState state : candidates) {
             if (state.score < lowestScore) lowestScore = state.score;
         }

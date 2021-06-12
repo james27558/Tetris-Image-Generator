@@ -1,8 +1,8 @@
 package core;
 
 public class BoardArray {
-    Block[][] array;
-    int offset;
+    private Block[][] array;
+    private int offset;
 
     int height;
     int visibleHeight;
@@ -10,7 +10,7 @@ public class BoardArray {
 
     BoardArray(int width, int height) {
         // Make the offset the height / 4 if it is bigger than 4, else make it 4
-        offset = Window.max(height / 2, 10);
+        offset = Window.max(height / 4, 10);
 //        offset = 20;
 
         array = new Block[height + offset][width];
@@ -26,7 +26,7 @@ public class BoardArray {
      * @param y Y index to transform
      * @return core.Board focused y index
      */
-    int getY(int y) {
+    private int getY(int y) {
         return height - 1 - y;
     }
 

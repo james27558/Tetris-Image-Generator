@@ -3,27 +3,25 @@ package core;
 import processing.core.PApplet;
 
 public class Window extends PApplet {
-    static Board board = null;
-
     // Input arguments
-    public static int heightInBlocks;
-    public static int widthInBlocks;
-    public static int cellDiameter;
+    protected static int heightInBlocks;
+    protected static int widthInBlocks;
+    protected static int cellDiameter;
+    static int argSeed = 2;
     static int heightDiff;
-    static float chaos;
+    private static Board board = null;
 
     static boolean logging = true;
     static boolean placePieces = true;
     static boolean shouldSaveAndResetBoard = false;
-    static int saveCount = 0;
+    private static float chaos;
     static boolean debug = true;
-
+    private static int saveCount = 0;
     // User Settings
-    static String argFiletype = ".tiff"; // Default .tiff
-    static int argSeed = 1;
-    static int argOutputNum = 1; // Default 1
+    private static String argFileType = ".tiff"; // Default .tiff
+    private static int argOutputNum = 1; // Default 1
 
-    static long start = System.currentTimeMillis();
+    private static long start = System.currentTimeMillis();
     static long end;
 
     public static void main(String[] args) {
@@ -31,7 +29,9 @@ public class Window extends PApplet {
         PApplet.main("core.Window");
     }
 
-    static void parseArguments(String[] args) {
+    private static void parseArguments(String[] args) {
+        // TODO: Add max height optional argument
+
         // No args. Print help message and exit
         if (args.length == 0) {
             System.out.println("Default argument order: [WIDTH] [HEIGHT] [DIAMETER] [HEIGHT DIFFERENCE] [CHAOS] " +
@@ -130,7 +130,7 @@ public class Window extends PApplet {
 
             switch (userArg) {
                 case "--filetype":
-                    processFiletypeParameter(args[index + 1]);
+                    processFileTypeParameter(args[index + 1]);
                     break;
                 case "--seed":
                     processSeed(args[index + 1]);
@@ -141,9 +141,23 @@ public class Window extends PApplet {
             }
         }
 
+        // Set score weightings based on parameters, a height difference of 0 should only care about bumpiness and
+        // height difference, not Towers for example
+        if (heightDiff == 0) {
+            PotentialBoardState.setHeightDiffMultiplier(1);
+            PotentialBoardState.setBumpinessMultiplier(1);
+            PotentialBoardState.setGoalDistScoreMultiplier(0);
+        } else {
+            // If we are creating Towers then set Height difference multiplier to 0, it will be changed in the height
+            // difference phase
+            PotentialBoardState.setHeightDiffMultiplier(0);
+            PotentialBoardState.setBumpinessMultiplier(1);
+            PotentialBoardState.setGoalDistScoreMultiplier(1);
+        }
+
     }
 
-    static boolean validateArgumentName(String argumentName) {
+    private static boolean validateArgumentName(String argumentName) {
         String[] validOptionalArguments = new String[]{"--filetype", "--seed", "--outputnum"};
 
         // Check if the argument is in the valid argument list
@@ -157,19 +171,19 @@ public class Window extends PApplet {
         return false;
     }
 
-    static void processFiletypeParameter(String filetype) {
+    private static void processFileTypeParameter(String filetype) {
         switch (filetype) {
             case "tiff":
-                argFiletype = ".tiff";
+                argFileType = ".tiff";
                 break;
             case "jpg":
-                argFiletype = ".jpg";
+                argFileType = ".jpg";
                 break;
             case "png":
-                argFiletype = ".png";
+                argFileType = ".png";
                 break;
             case "tga":
-                argFiletype = ".tga";
+                argFileType = ".tga";
                 break;
 
             default:
@@ -181,7 +195,7 @@ public class Window extends PApplet {
         if (logging) System.out.println(filetype + " argument is validated");
     }
 
-    static void processSeed(String seed) {
+    private static void processSeed(String seed) {
         try {
             argSeed = Integer.parseInt(seed);
             if (logging) System.out.println(seed + " seed is valid");
@@ -191,7 +205,7 @@ public class Window extends PApplet {
         }
     }
 
-    static void processOutputNum(String outputNum) {
+    private static void processOutputNum(String outputNum) {
         try {
             argOutputNum = Integer.parseInt(outputNum);
 
@@ -205,21 +219,13 @@ public class Window extends PApplet {
         }
     }
 
-    /**
-     *
-     */
     public void settings() {
-
         size(widthInBlocks * cellDiameter, heightInBlocks * cellDiameter);
         board = new Board(widthInBlocks, heightInBlocks);
-
-//        core.Piece p = new core.Piece(core.Piece.PieceColour.L, 5,10);
-//        p.rotatePieceClockwise();
-//        p.rotatePieceClockwise();
-//        p.placePieceOnBoard();
     }
 
     public void draw() {
+        // If we have saved the target number of images, then exit
         if (saveCount == argOutputNum) {
             System.out.println("Program has generated " + saveCount + " images. Now exiting");
             System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000);
@@ -227,21 +233,37 @@ public class Window extends PApplet {
         }
 
         if (board != null) {
-            frameRate(120);
+            frameRate(50);
             background(51);
             strokeWeight(1);
 
 //            drawBackboard();
             drawPlacedBlocks();
 
+            if (heightDiff != 0) {
+                // Draw all X Goals
+                for (TowerGoal goal : Board.towerGoals) {
+                    fill(255, 0, 0);
+                    ellipse(goal.getBoardX() * cellDiameter,
+                            height - (goal.getBoardY() * cellDiameter), 10, 10);
+                }
+
+                // Draw the current X Goal
+                fill(0, 255, 0);
+                ellipse(Board.currentTowerGoal.getBoardX() * cellDiameter,
+                        height - (Board.currentTowerGoal.getBoardY() * cellDiameter), 10, 10);
+            }
+
+
+
             fill(255);
-            text("core.Piece: " + Piece.PieceColour.identifyColourName(Board.currentPiece.pieceColour.r,
+            text("Piece: " + Piece.PieceColour.identifyColourName(Board.currentPiece.pieceColour.r,
                     Board.currentPiece.pieceColour.g, Board.currentPiece.pieceColour.b), 20, 20);
         }
 
-
+        // If we've found an acceptable Board then shouldSaveAndResetBoard will be true. If so, save the Board and reset
         if (shouldSaveAndResetBoard) {
-            save(saveCount + argFiletype);
+            save(saveCount + argFileType);
 
             Board.resetBoard();
 
@@ -249,9 +271,9 @@ public class Window extends PApplet {
             saveCount++;
         }
 
-        if (frameCount % 2 == 0 && placePieces) {
+        if (frameCount % 1 == 0 && placePieces) {
             for (int i = 0; i < 1; i++) {
-                board.simulateCurrentPiece();
+                Board.simulateCurrentPiece();
                 Board.loadNextPieceFromQueue();
             }
         }
