@@ -1,4 +1,4 @@
-# Kira-Tetris
+# Tetris Image Generator
 This project is about making pretty pictures with a valid sequence of Tetris blocks.
 
 ## Specification
