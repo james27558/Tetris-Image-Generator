@@ -9,7 +9,7 @@ Modifiable parameters:
 - The height difference between the lowest and highest point on the board
 - How "chaotic" the board is, from a scale of 0 to 100. The more chaotic, the more holes
 
-See https://github.com/james27558/Kira-Tetris/wiki/Instructions-for-use---Command-Line-Arguments for instructions on how to use the provided jar
+See https://github.com/james27558/Tetris-Image-Generator/wiki/Instructions-for-use---Command-Line-Arguments for instructions on how to use the provided jar
 
 ## To-do
 - [X] Accept command line arguments for the height and width of the image in blocks
